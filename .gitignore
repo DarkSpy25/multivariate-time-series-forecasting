@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .ipynb_checkpoints/
+.vscode/
 
 # data is 170 MB so we never commit it.
 data/
