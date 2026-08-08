@@ -85,6 +85,17 @@ def make_loader(ds, bs=64, shuffle=True):
     return DataLoader(ds, batch_size=bs, shuffle=shuffle,
                       num_workers=0, drop_last=shuffle)
 
+
+def validation_batch(Xs, Y, series, L, train_end, s0, s1, gap=0):
+    """One window per series, history ending gap hours before the scored block."""
+    hist_end = train_end - gap
+    assert hist_end - L >= 0, f"L={L}+gap={gap} exceeds {train_end} hours"
+    xh = np.stack([np.concatenate(
+        [Xs[s, hist_end-L:hist_end], Y[s, hist_end-L:hist_end, None]], 1)
+        for s in range(len(series))]).astype("float32")
+    xf = Xs[:, s0:s1].astype("float32")
+    return torch.from_numpy(xh), torch.from_numpy(xf), Y[:, s0:s1]
+
 if __name__ == "__main__":
     X, Y, series, hours, feats, St = load_cube("data/raw/train.csv")
     ds = WindowDataset(X, Y, L=512, H=336, train_end=3984, gap=0)
