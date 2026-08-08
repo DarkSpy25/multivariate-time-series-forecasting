@@ -1,5 +1,5 @@
 import argparse, time, numpy as np, torch, torch.nn as nn
-from .data import load_cube, WindowDataset, make_loader, fold_bounds, H
+from .data import load_cube, WindowDataset, make_loader, fold_bounds, validation_batch, H
 from .scaling import GlobalScaler
 from .metrics import all_metrics
 from .models import build_model
@@ -55,11 +55,8 @@ def main():
     ds = WindowDataset(Xs, Y, L=L, H=H, train_end=train_end, gap=a.gap)
     dl = make_loader(ds, bs=a.batch_size, shuffle=True)
 
-    vx = torch.from_numpy(np.stack([np.concatenate(
-        [Xs[s, train_end-L:train_end], Y[s, train_end-L:train_end, None]], 1)
-        for s in range(len(series))])).to(dev)
-    vxf = torch.from_numpy(Xs[:, s0:s1]).to(dev)
-    vy = Y[:, s0:s1]
+    vx, vxf, vy = validation_batch(Xs, Y, series, L, train_end, s0, s1, gap=a.gap)
+    vx, vxf = vx.to(dev), vxf.to(dev)
 
     model = build_model(a, n_feat=Xs.shape[2], n_series=len(series), L=L, H=H).to(dev)
     print(a.model, "params:", sum(p.numel() for p in model.parameters()))
