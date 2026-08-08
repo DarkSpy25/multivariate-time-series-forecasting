@@ -15,5 +15,8 @@ checkpoints/
 predictions/
 *.zip
 
+# ignore docs for decisions and roadmap
+docs/
+
 # results of our experiments, they are small and we want to keep them.
 !experiments/runs.csv
