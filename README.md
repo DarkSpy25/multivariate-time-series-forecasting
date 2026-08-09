@@ -9,3 +9,8 @@
 - NaNs in: 
 - future covariates supplied: YES / NO  <- from step 1.3
 - horizon: 336 h; submission rows = 96 x 336 = 32,256
+## Model design decisions
+- Series identity: none used (relying on RevIN normalization + covariate pathway).
+  Verified all validation_input.csv series exist in train.csv (empty set difference),
+  so a learned embedding was technically viable — skipped for now given time,
+  documented as a future ablation.
