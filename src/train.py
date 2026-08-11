@@ -1,4 +1,4 @@
-import argparse, time, numpy as np, torch, torch.nn as nn
+import argparse, os, time, numpy as np, torch, torch.nn as nn
 from .data import load_cube, WindowDataset, make_loader, fold_bounds, validation_batch, H
 from .scaling import GlobalScaler
 from .metrics import all_metrics
@@ -148,6 +148,7 @@ def main():
 
     run_id = f"{a.model}_f{a.fold}_s{a.seed}_L{L}_{a.loss}" \
              f"{'_revin' if a.revin else ''}{'_cov' if a.covariates else ''}"
+    os.makedirs(a.out, exist_ok=True)
     torch.save({
         "state_dict": best_state,
         "config": vars(a),

@@ -4,6 +4,7 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints/
 .vscode/
+.idea/
 
 # data is 170 MB so we never commit it.
 data/
