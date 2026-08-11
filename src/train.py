@@ -36,8 +36,12 @@ def main():
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--patience", type=int, default=4)
     ap.add_argument("--device", default=None)
-    ap.add_argument("--out", default="runs")
+    ap.add_argument("--out", default="experiments/checkpoints")
     ap.add_argument("--notes", default="")
+    ap.add_argument("--n-heads", type=int, default=8)
+    ap.add_argument("--d-ff", type=int, default=256)
+    ap.add_argument("--channel-mixing", type=int, default=0)
+    ap.add_argument("--target-only", type=int, default=0)
     a = ap.parse_args()
 
     torch.manual_seed(a.seed); np.random.seed(a.seed)
@@ -68,30 +72,79 @@ def main():
 
     best, bad, best_state = 1e9, 0, None
     for ep in range(a.epochs):
-        model.train(); tot = n = 0
-        for xh, xf, yf, si in dl:
+        epoch_start = time.time()
+        print(f"\nStarting epoch {ep+1}/{a.epochs}...", flush=True)
+        model.train()
+        tot = n = 0
+
+        for batch_idx, (xh, xf, yf, si) in enumerate(dl):
             xh, xf, yf = xh.to(dev), xf.to(dev), yf.to(dev)
             opt.zero_grad()
-            loss = crit(model(xh, xf, si.to(dev)), yf)
+            loss = crit(
+                model(xh, xf, si.to(dev)),
+                yf
+            )
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            opt.step(); sched.step()
-            tot += loss.item() * len(yf); n += len(yf)
+
+            opt.step()
+            sched.step()
+            tot += loss.item() * len(yf)
+            n += len(yf)
+
+            # Print progress every 10 batches
+            if (batch_idx + 1) % 50 == 0 or (batch_idx + 1) == len(dl):
+                print(
+                    f"  batch {batch_idx+1}/{len(dl)} "
+                    f"loss {loss.item():.4f}",
+                    flush=True
+                )
 
         model.eval()
         with torch.no_grad():
-            pv = model(vx, vxf, torch.arange(len(series), device=dev)).cpu().numpy()
+            pv = model(
+                vx,
+                vxf,
+                torch.arange(len(series), device=dev)
+            ).cpu().numpy()
         m = all_metrics(vy, pv)
-        print(f"ep{ep:02d}  train {tot/n:.4f}   val WAPE {m['wape']:.4f}")
+
+        epoch_time = time.time() - epoch_start
+
+        print(
+            f"ep{ep+1:02d}/{a.epochs}  "
+            f"train {tot/n:.4f}  "
+            f"val WAPE {m['wape']:.4f}  "
+            f"time {epoch_time:.1f}s",
+            flush=True
+        )
 
         if m["wape"] < best - 1e-4:
             best, bad = m["wape"], 0
-            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+
+            best_state = {
+                k: v.detach().cpu().clone()
+                for k, v in model.state_dict().items()
+            }
+
             best_metrics = m
+
+            print(
+                f"  ✓ new best WAPE: {best:.4f}",
+                flush=True
+            )
+
         else:
             bad += 1
+
+            print(
+                f"  no improvement ({bad}/{a.patience})",
+                flush=True
+            )
+
             if bad >= a.patience:
-                print("early stop"); break
+                print("early stop", flush=True)
+                break
 
     run_id = f"{a.model}_f{a.fold}_s{a.seed}_L{L}_{a.loss}" \
              f"{'_revin' if a.revin else ''}{'_cov' if a.covariates else ''}"
