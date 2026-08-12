@@ -48,7 +48,11 @@ def load_cube(path, use_trend=True, fill="ffill", add_mask=False):
 
     X = df[feats].to_numpy("float32").reshape(S, T, len(feats))
     Y = df["target"].to_numpy("float32").reshape(S, T)
-    St = df.groupby("series_id")[STATIC].first().loc[series].to_numpy("float32")
+    have = [c for c in STATIC if c in df.columns]
+    if have:
+        St = df.groupby("series_id")[have].first().loc[series].to_numpy("float32")
+    else:
+        St = np.zeros((S, 0), "float32")  # ETT has no static cols; St is unused downstream
 
     assert np.isfinite(X).all() and np.isfinite(Y).all()
     return X, Y, series, hours, feats, St
