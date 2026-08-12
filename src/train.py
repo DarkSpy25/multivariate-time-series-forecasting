@@ -42,6 +42,7 @@ def main():
     ap.add_argument("--d-ff", type=int, default=256)
     ap.add_argument("--channel-mixing", type=int, default=0)
     ap.add_argument("--target-only", type=int, default=0)
+    ap.add_argument("--data", default="data/raw/train.csv")
     a = ap.parse_args()
 
     torch.manual_seed(a.seed); np.random.seed(a.seed)
@@ -49,9 +50,9 @@ def main():
     L = a.lookback
 
     X, Y, series, hours, feats, St = load_cube(
-        "data/raw/train.csv", use_trend=bool(a.use_trend),
+        a.data, use_trend=bool(a.use_trend),
         fill=a.fill, add_mask=bool(a.add_mask))
-    train_end, s0, s1 = fold_bounds(a.fold)
+    train_end, s0, s1 = fold_bounds(a.fold, total=len(hours))
 
     scaler = GlobalScaler().fit(X, upto=train_end)
     Xs = scaler.transform(X)
