@@ -61,14 +61,19 @@ def build_model(args, n_feat, n_series, L, H):
 
 
 def build_model_from_config(cfg, n_feat, n_series, L, H):
-    """Rebuild a model from a saved config dict (used by predict.py later)."""
+    """Rebuild a model from a saved config dict (used by predict.py)."""
+    use_revin = bool(cfg.get("revin", 1))
+    use_cov   = bool(cfg.get("covariates", 0))
+    common = dict(L=L, H=H, n_feat=n_feat,
+                  use_revin=use_revin, use_covariates=use_cov)
     if cfg["model"] == "linear":
-        return LinearForecaster(L=L, H=H, use_revin=bool(cfg.get("revin", 1)))
+        return LinearForecaster(**common)
+    if cfg["model"] == "mlp":
+        return MLPForecaster(**common)
+    if cfg["model"] == "lstm":
+        return LSTMForecaster(**common)
     if cfg["model"] == "patchtst":
-        return PatchTST(
-            L=L,
-            H=H,
-            n_feat=cfg.get("n_feat", 1),
+        return PatchTST(**common,
             patch_len=cfg.get("patch_len", 16),
             stride=cfg.get("stride", 8),
             d_model=cfg.get("d_model", 128),
@@ -76,10 +81,8 @@ def build_model_from_config(cfg, n_feat, n_series, L, H):
             n_heads=cfg.get("n_heads", 8),
             d_ff=cfg.get("d_ff", 256),
             dropout=cfg.get("dropout", 0.2),
-            use_revin=bool(cfg.get("revin", 1)),
             channel_mixing=bool(cfg.get("channel_mixing", False)),
-            target_only=bool(cfg.get("target_only", False)),
-        )
+            target_only=bool(cfg.get("target_only", False)))
     raise ValueError(f"Unknown model: {cfg['model']}")
 
 class PatchTST(nn.Module):

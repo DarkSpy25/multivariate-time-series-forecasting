@@ -100,6 +100,30 @@ def validation_batch(Xs, Y, series, L, train_end, s0, s1, gap=0):
     xf = Xs[:, s0:s1].astype("float32")
     return torch.from_numpy(xh), torch.from_numpy(xf), Y[:, s0:s1]
 
+def prepare_inference_cube(inp_path, fi, features, series_order, scaler, L, H,
+                           fallback_x=None, fallback_y=None, fallback_end=None):
+    """Inference tensors. The graded input is covariates-only (no target),
+    so the past-target history comes from the baked checkpoint tail."""
+    df = pd.read_csv(inp_path, parse_dates=["timestamp"])
+    df = df.sort_values(["series_id", "timestamp"])
+    S = len(series_order)
+
+    # future covariates -> (S, H, F) in the saved feature order, then scaled
+    fut = np.sort(pd.to_datetime(fi.timestamp).unique())[-H:]
+    Xf = np.zeros((S, H, len(features)), "float32")
+    for i, sid in enumerate(series_order):
+        d = df[df.series_id == sid].set_index("timestamp").reindex(fut)
+        Xf[i] = d[features].to_numpy("float32")
+    Xf = scaler.transform(Xf).astype("float32")
+
+    # history -> (S, L, F+1): baked scaled covariates + baked raw target
+    assert fallback_x is not None, ("checkpoint has no baked history; "
+        "retrain after step 8.5.2")
+    hx = np.asarray(fallback_x, "float32")             # (S, L, F) scaled
+    hy = np.asarray(fallback_y, "float32")[..., None]  # (S, L, 1) raw
+    Xh = np.concatenate([hx, hy], 2).astype("float32")
+    return Xh, Xf, list(series_order)
+
 if __name__ == "__main__":
     X, Y, series, hours, feats, St = load_cube("data/raw/train.csv")
     ds = WindowDataset(X, Y, L=512, H=336, train_end=3984, gap=0)
