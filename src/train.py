@@ -157,6 +157,9 @@ def main():
         "series": list(series),
         "features": list(feats),
         "L": L, "H": H,
+        "history_x": Xs[:, train_end-L:train_end].tolist(),   # scaled covariates, last L hrs
+        "history_y": Y[:, train_end-L:train_end].tolist(),    # RAW target, last L hrs
+        "history_end": str(hours[train_end-1]),               # informational
     }, f"{a.out}/{run_id}.pt")
 
     log_run(run_id=run_id, minutes=round((time.time()-t0)/60, 1),
