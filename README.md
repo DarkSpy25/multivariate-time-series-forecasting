@@ -14,3 +14,42 @@
   Verified all validation_input.csv series exist in train.csv (empty set difference),
   so a learned embedding was technically viable — skipped for now given time,
   documented as a future ablation.
+## Inference / Submission (Phase 9)
+
+The submission archive contains: `predict.py`, `requirements.txt`,
+`checkpoint.pt`, `src/`, `README.md` (this file). No training data,
+virtual environments, notebooks, or experiment logs are included.
+
+### Install
+
+```
+pip install -r requirements.txt
+```
+
+### Run
+
+```
+python predict.py --input-dir <path-to-input-dir> --output-dir <path-to-output-dir> --checkpoint checkpoint.pt
+```
+
+- `--input-dir` must contain either `validation_input.csv` +
+  `forecast_index_validation.csv`, or the graded `test_input.csv` +
+  `forecast_index_test.csv` (predict.py auto-detects which).
+- `--output-dir` is created if it doesn't exist; the script writes
+  `predictions.csv` there.
+- `--checkpoint` defaults to `checkpoint.pt` next to the script.
+
+### Expected input / output schema
+
+- Input covariates CSV: `series_id, timestamp, <22 feature columns>` (no
+  target column -- the model's own training-history tail, baked into the
+  checkpoint, supplies past target values).
+- `forecast_index_*.csv`: `series_id, timestamp` -- the exact rows to
+  predict.
+- Output `predictions.csv`: `series_id, timestamp, prediction`, one row per
+  (series, hour) pair -- 96 series x 336 hours = 32,256 rows + header.
+
+### Hardware
+
+Runs on CPU or Apple Silicon (MPS) automatically; no GPU required. Full
+inference over all 96 series completes in well under a minute on a laptop.
