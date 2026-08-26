@@ -1,6 +1,3 @@
-# Inference-only dependencies (roadmap 9.3).
-# Dev/notebook tools (matplotlib, jupyter, huggingface-hub) are intentionally
-# excluded -- they aren't needed to run predict.py.
-torch
-pandas
-numpy
+numpy==2.5.1
+pandas==3.0.5
+torch==2.13.0

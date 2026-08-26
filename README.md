@@ -29,14 +29,14 @@ pip install -r requirements.txt
 ### Run
 
 ```
-python predict.py --input-dir <path-to-input-dir> --output-dir <path-to-output-dir> --checkpoint checkpoint.pt
+python predict.py --input_dir <path-to-input-dir> --output_file <path-to-output-file>/predictions.csv --checkpoint checkpoint.pt
 ```
 
-- `--input-dir` must contain either `validation_input.csv` +
+- `--input_dir` must contain either `validation_input.csv` +
   `forecast_index_validation.csv`, or the graded `test_input.csv` +
   `forecast_index_test.csv` (predict.py auto-detects which).
-- `--output-dir` is created if it doesn't exist; the script writes
-  `predictions.csv` there.
+- `--output_file` is the full path (including filename) to write the
+  prediction CSV to; the parent directory is created if it doesn't exist.
 - `--checkpoint` defaults to `checkpoint.pt` next to the script.
 
 ### Expected input / output schema
