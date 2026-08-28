@@ -113,7 +113,9 @@ def prepare_inference_cube(inp_path, fi, features, series_order, scaler, L, H,
     Xf = np.zeros((S, H, len(features)), "float32")
     for i, sid in enumerate(series_order):
         d = df[df.series_id == sid].set_index("timestamp").reindex(fut)
+        d[features] = d[features].ffill().bfill()
         Xf[i] = d[features].to_numpy("float32")
+    Xf = np.nan_to_num(Xf, nan=0.0)
     Xf = scaler.transform(Xf).astype("float32")
 
     # history -> (S, L, F+1): baked scaled covariates + baked raw target
