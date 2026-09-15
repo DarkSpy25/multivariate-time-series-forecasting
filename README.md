@@ -1,5 +1,3 @@
-# dlam-ts-38
-
 ## Data contract
 - 96 series, unit_000..unit_095
 - train.csv: 4320 h/series, 2023-01-01 00:00 -> 2023-06-29 23:00, hourly, no gaps
@@ -14,7 +12,7 @@
   Verified all validation_input.csv series exist in train.csv (empty set difference),
   so a learned embedding was technically viable — skipped for now given time,
   documented as a future ablation.
-## Inference / Submission (Phase 9)
+## Inference / Submission
 
 The submission archive contains: `predict.py`, `requirements.txt`,
 `checkpoint.pt`, `src/`, `README.md` (this file). No training data,
